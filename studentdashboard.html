@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Student Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Icons -->
+<link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+<!-- Chart JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+  :root {
+    --primary: #2563eb;
+    --secondary: #3b82f6;
+    --accent: #0ea5e9;
+    --bg-color: #f1f5f9;
+    --card-bg: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Top Bar */
+  .top-bg {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    padding: 40px 20px 80px 20px;
+    border-radius: 0 0 30px 30px;
+    color: white;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.2);
+  }
+
+  .header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+  }
+
+  .user-info h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .user-info p {
+    font-size: 14px;
+    opacity: 0.9;
+  }
+
+  .logout-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    padding: 10px 14px;
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .logout-btn:hover { background: rgba(255, 255, 255, 0.3); }
+
+  /* Quick Summary Cards (overlapping the header) */
+  .summary-wrapper {
+    display: flex;
+    gap: 15px;
+    padding: 0 20px;
+    margin-top: -50px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .summary-card {
+    flex: 1;
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .summary-card i {
+    font-size: 28px;
+    margin-bottom: 10px;
+  }
+
+  .summary-card .val {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  .summary-card .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-top: 5px;
+  }
+
+  .text-success { color: var(--success); }
+  .text-danger { color: var(--danger); }
+  .text-primary { color: var(--secondary); }
+
+  /* Main Grid */
+  .container {
+    padding: 30px 20px;
+    padding-bottom: 100px;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--text-main);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .grid-item {
+    background: var(--card-bg);
+    padding: 20px 15px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 8px 15px rgba(0,0,0,0.03);
+    cursor: pointer;
+    transition: transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .grid-item:active { transform: scale(0.95); }
+
+  .icon-wrapper {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+
+  /* Specific Icon Colors */
+  .bg-fee { background: #e0e7ff; color: #4338ca; }
+  .bg-att { background: #dcfce7; color: #15803d; }
+  .bg-res { background: #fef08a; color: #a16207; }
+  .bg-time { background: #ffedd5; color: #c2410c; }
+
+  .grid-item span {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+
+  /* Bottom Modal Sheet */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    opacity: 0;
+    visibility: hidden;
+    transition: 0.3s;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.active { opacity: 1; visibility: visible; }
+
+  .bottom-sheet {
+    position: fixed;
+    bottom: -100%;
+    left: 0; right: 0;
+    background: var(--card-bg);
+    border-radius: 30px 30px 0 0;
+    padding: 30px 20px;
+    z-index: 101;
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1);
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+  }
+  .bottom-sheet.active { bottom: 0; }
+
+  .sheet-handle {
+    width: 50px; height: 5px;
+    background: #cbd5e1;
+    border-radius: 5px;
+    margin: 0 auto 20px auto;
+  }
+
+  .sheet-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+    color: var(--text-main);
+  }
+
+  /* Content Specific */
+  .fee-block {
+    background: var(--bg-color);
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+  }
+  .fee-row {
+    display: flex; justify-content: space-between;
+    margin-bottom: 12px; font-size: 15px; font-weight: 500;
+  }
+  .fee-row:last-child { margin-bottom: 0; font-size: 18px; font-weight: 700; margin-top: 15px; border-top: 1px dashed #cbd5e1; padding-top: 15px; }
+
+  .btn-primary {
+    display: block; width: 100%;
+    background: var(--primary);
+    color: white; font-weight: 600; font-size: 16px;
+    padding: 16px; border: none; border-radius: 14px;
+    cursor: pointer; text-align: center; text-decoration: none;
+    box-shadow: 0 8px 20px rgba(37,99,235,0.3);
+    transition: 0.2s;
+  }
+  .btn-primary:active { transform: scale(0.98); }
+  
+  .chart-container {
+    position: relative; height: 220px; width: 100%;
+    display: flex; justify-content: center; margin-bottom: 20px;
+  }
+
+  /* Timetable Table Styling */
+  .timetable-wrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+  }
+  table { width: 100%; border-collapse: collapse; min-width: 500px; }
+  th, td { padding: 12px; text-align: center; font-size: 13px; border-bottom: 1px solid #e2e8f0; }
+  th { background: var(--bg-color); color: var(--text-muted); font-weight: 600; }
+  .lunch { background: #fef08a; font-weight: 700; color: #854d0e; }
+</style>
+</head>
+<body>
+
+  <div class="top-bg">
+    <div class="header-actions">
+      <div class="user-info">
+        <h1 id="greetName">Hello!</h1>
+        <p>VKR, VNB & AGK Engineering College</p>
+      </div>
+      <button class="logout-btn" onclick="logout()">
+        <i class='bx bx-log-out'></i> Exit
+      </button>
+    </div>
+  </div>
+
+  <div class="summary-wrapper">
+    <div class="summary-card" onclick="openSheet('att-sheet')">
+      <i class='bx bx-check-shield text-success'></i>
+      <div class="val" id="quickAtt">0%</div>
+      <div class="label">Attendance</div>
+    </div>
+    <div class="summary-card" onclick="openSheet('fee-sheet')">
+      <i class='bx bx-wallet text-danger'></i>
+      <div class="val" id="quickDue">₹0</div>
+      <div class="label">Fee Due</div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2 class="section-title">Student Services</h2>
+    <div class="grid">
+      <div class="grid-item" onclick="openSheet('fee-sheet')">
+        <div class="icon-wrapper bg-fee"><i class='bx bx-credit-card-front'></i></div>
+        <span>Pay College Fee</span>
+      </div>
+      <div class="grid-item" onclick="openSheet('att-sheet')">
+        <div class="icon-wrapper bg-att"><i class='bx bx-calendar-check'></i></div>
+        <span>Monthly Attendance</span>
+      </div>
+      <div class="grid-item" onclick="openSheet('res-sheet')">
+        <div class="icon-wrapper bg-res"><i class='bx bx-award'></i></div>
+        <span>Exam Results</span>
+      </div>
+      <div class="grid-item" onclick="openSheet('time-sheet')">
+        <div class="icon-wrapper bg-time"><i class='bx bx-time-five'></i></div>
+        <span>Timetable</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Overlays -->
+  <div class="modal-overlay" id="overlay" onclick="closeSheets()"></div>
+
+  <!-- Fee Sheet -->
+  <div class="bottom-sheet" id="fee-sheet">
+    <div class="sheet-handle"></div>
+    <h3 class="sheet-title">Fee Details</h3>
+    <div class="fee-block">
+      <div class="fee-row"><span>Total Fee</span><span id="feeTot">₹0</span></div>
+      <div class="fee-row"><span>Paid Amount</span><span id="feePaid" class="text-success">₹0</span></div>
+      <div class="fee-row text-danger" style="margin-top: 15px; border-top: 1px dashed #cbd5e1; padding-top: 15px;">
+        <span>Amount Due</span><span id="feeDue">₹0</span>
+      </div>
+    </div>
+    <a href="payment.html" class="btn-primary" id="payBtn">Proceed to Pay Now</a>
+  </div>
+
+  <!-- Attendance Sheet -->
+  <div class="bottom-sheet" id="att-sheet">
+    <div class="sheet-handle"></div>
+    <h3 class="sheet-title">Monthly Attendance</h3>
+    <div class="chart-container">
+      <canvas id="attChart"></canvas>
+    </div>
+    <p style="text-align:center; color:var(--text-muted); font-size:14px; margin-bottom: 10px;" id="attStatusMsg">Keep it up! Your attendance is solid.</p>
+  </div>
+
+  <!-- Results Sheet -->
+  <div class="bottom-sheet" id="res-sheet">
+    <div class="sheet-handle"></div>
+    <h3 class="sheet-title">Recent Results</h3>
+    <div class="fee-block" style="text-align: center; color: var(--text-muted); padding: 40px 20px;">
+      <i class='bx bx-file-blank' style="font-size: 40px; margin-bottom: 10px; color: #cbd5e1;"></i>
+      <p>No recent exam results published yet.</p>
+    </div>
+  </div>
+
+  <!-- Timetable Sheet -->
+  <div class="bottom-sheet" id="time-sheet">
+    <div class="sheet-handle"></div>
+    <h3 class="sheet-title">Weekly Timetable</h3>
+    <div class="timetable-wrapper">
+      <table>
+        <tr>
+          <th>Day</th>
+          <th>P1</th><th>P2</th><th>P3</th>
+          <th class="lunch">L</th>
+          <th>P4</th><th>P5</th><th>P6</th>
+        </tr>
+        <tr><td>MON</td><td>SE</td><td>DTI</td><td>MEFA</td><td class="lunch"></td><td>DBMS</td><td>TECH</td><td>DBMS</td></tr>
+        <tr><td>TUE</td><td>P&S</td><td>DTI</td><td>-</td><td class="lunch"></td><td>MEFA</td><td>VERB</td><td>SE</td></tr>
+        <tr><td>WED</td><td>OS</td><td>APT</td><td>MEFA</td><td class="lunch"></td><td>SS</td><td>DBMS</td><td>P&S</td></tr>
+        <tr><td>THU</td><td>DBMS</td><td colspan="2">OS LAB</td><td class="lunch"></td><td>P&S</td><td>SE</td><td>MEFA</td></tr>
+        <tr><td>FRI</td><td>MEFA</td><td>P&S</td><td>OS</td><td class="lunch"></td><td>-</td><td>LAB</td><td>-</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Navigation / Setup
+    let student = JSON.parse(localStorage.getItem("studentData"));
+    
+    // Safety check - if none exists, setup demo data
+    if(!student){
+      student = { name:"Lokesh", uid:"22CS101", fee:40000, paid:20000, attendance:82 };
+      localStorage.setItem("studentData", JSON.stringify(student));
+    } else {
+      // Fix attendance if it's a string from login (e.g., "85%")
+      if (typeof student.attendance === 'string') {
+        student.attendance = parseInt(student.attendance.replace('%', ''));
+      }
+      // Ensure paid exists
+      if (!student.paid) student.paid = 0;
+    }
+
+    // Bind UI Elements
+    document.getElementById("greetName").innerText = "Hello, " + (student.name.charAt(0).toUpperCase() + student.name.slice(1)) + "!";
+    
+    // Calculate Fees
+    const totalFee = student.fee || 0;
+    const paidFee = student.paid || 0;
+    const dueFee = (totalFee - paidFee) > 0 ? (totalFee - paidFee) : 0;
+    const attNum = student.attendance || 0;
+
+    // Quick Stats
+    document.getElementById("quickAtt").innerText = attNum + "%";
+    document.getElementById("quickDue").innerText = "₹" + dueFee.toLocaleString();
+    
+    if(dueFee === 0) {
+      document.getElementById("quickDue").className = "val text-success";
+      document.getElementById("quickDue").innerText = "Paid";
+    }
+
+    // Modal Interaction Logic
+    function openSheet(id) {
+      document.getElementById('overlay').classList.add('active');
+      document.getElementById(id).classList.add('active');
+      
+      // Load lazy data when opened
+      if(id === 'fee-sheet') loadFeeData();
+      if(id === 'att-sheet') renderAttChart();
+    }
+
+    function closeSheets() {
+      document.getElementById('overlay').classList.remove('active');
+      const sheets = document.querySelectorAll('.bottom-sheet');
+      sheets.forEach(s => s.classList.remove('active'));
+    }
+
+    function logout() {
+      localStorage.removeItem("studentData");
+      window.location.href = "index.html";
+    }
+
+    // Sheet Specific Data Loading
+    function loadFeeData() {
+      document.getElementById("feeTot").innerText = "₹" + totalFee.toLocaleString();
+      document.getElementById("feePaid").innerText = "₹" + paidFee.toLocaleString();
+      document.getElementById("feeDue").innerText = "₹" + dueFee.toLocaleString();
+
+      if(dueFee === 0) {
+        document.getElementById("payBtn").style.display = "none";
+        document.getElementById("feeDue").className = "text-success";
+      }
+    }
+
+    let chartInstance = null;
+    function renderAttChart() {
+      if(chartInstance) return; // already rendered
+      const ctx = document.getElementById("attChart").getContext("2d");
+      
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Attended', 'Missed'],
+          datasets: [{
+            data: [attNum, 100 - attNum],
+            backgroundColor: ['#10b981', '#f1f5f9'],
+            borderWidth: 0,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '75%',
+          plugins: {
+            legend: { position: 'bottom', labels: { usePointStyle: true, font: { family: 'Outfit' } } }
+          }
+        }
+      });
+
+      // Update message
+      const msg = document.getElementById("attStatusMsg");
+      if(attNum >= 75) { msg.innerText = "Great job! You have enough attendance for exams."; msg.style.color = "#10b981"; }
+      else if(attNum >= 60) { msg.innerText = "Warning: Try to attend more classes to be safe."; msg.style.color = "#f59e0b"; }
+      else { msg.innerText = "Critical: Your attendance is too low."; msg.style.color = "#ef4444"; }
+    }
+  </script>
+</body>
+</html>
